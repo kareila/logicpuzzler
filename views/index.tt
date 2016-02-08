@@ -1,0 +1,24 @@
+<html>
+<head>
+<title>Logic Pictures</title>
+<style type="text/css">
+    #puzlist ul li:nth-child(odd) { background-color: lavender; }
+</style>
+</head>
+<body>
+
+<h1>Logic Pictures</h1>
+
+<ul id="puzlist">
+<%- FOREACH p IN puzzles -%>
+  <li>
+    <a href="?puzzle=<% p %>"><% p %></a>
+    <%- IF solutions.exists(p) -%>
+        &nbsp;(<a href="<% solutions.$p %>">solution</a>)
+    <%- END -%>
+  </li>
+<%- END -%>
+</ul>
+
+</body>
+</html>

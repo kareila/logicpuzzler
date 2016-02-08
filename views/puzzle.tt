@@ -1,0 +1,178 @@
+<html>
+<head>
+<title>Logic Pictures: <% puzzleid %></title>
+<style type="text/css">
+    #puzzle { border-collapse: collapse; } /* lets border styling work */
+    #puzzle th { font-weight: normal; } /* no special th styling */
+    #puzzle td, #puzzle th { text-align: center; width: 1.1em;
+                             font-size: .7em; line-height: 1.2em; }
+    #puzzle tr, #puzzle td, #puzzle th { border: none; } /* draw explicitly */
+    #puzzle td.border, #puzzle th.border { border-left: 1px solid;
+                                           border-right: 1px solid; }
+    #puzzle tr.border { border-top: 1px solid; border-bottom: 1px solid; }
+    /* these draw a heavier border between the clues and the grid */
+    #puzzle tr:nth-child(<% colcheck.1 %>) { border-bottom-style: double; }
+    #puzzle td:nth-child(<% rowcheck.1 %>) { border-right-style: double; }
+    /* this makes thicker lines every 5 rows */
+    #puzzle tr:nth-child(5n+<% colcheck.1 %>) { border-bottom-width: 2px; }
+    /* these make thicker lines every 5 cols */
+    #puzzle td:nth-child(5n+<% rowcheck.1 %>) { border-right-width: 2px; }
+    #puzzle th:nth-child(5n+1) { border-right-width: 2px; } /* no rowcheck because colspan */
+    /* make default colors explicit */
+    body { color: black; background-color: white; }
+    /* unused - maybe later? */
+/*    #puzzle .hilite { background-color: lavender; } -- set in JS */
+</style>
+<script src="js/multiarray.js"></script>
+<script src="js/picross.js"></script>
+<script src="js/cookiefun.js"></script>
+<script>
+var RowSize = <% rows.size %>
+var ColSize = <% cols.size %>
+
+function NewArray() { return MultiArray(RowSize, ColSize) }
+
+var StateData = NewArray()
+var ColState = MultiArray(<% colcheck.1 %>, ColSize)
+var RowState = MultiArray(RowSize, <% rowcheck.1 %>)
+
+// grid state is 0 for empty (default), 1 for fill, 2 for X
+function ChangeState(r,c) {
+    var id = 'r' + r + 'c' + c;
+    var state = StateData[r][c];
+    StateData[r][c] = GridAct(document.getElementById(id),state);
+    document.getElementById('stateset').disabled = false;
+}
+
+// same as ChangeState but in reverse for right-click
+function ReverseState(r,c) {
+    var id = 'r' + r + 'c' + c;
+    var state = StateData[r][c];
+    StateData[r][c] = GridAct(document.getElementById(id),(state + 1) % 3);
+    document.getElementById('stateset').disabled = false;
+}
+
+// same as ChangeState but don't alter the current value, just color the cell
+function RestoreState(r,c) {
+    var id = 'r' + r + 'c' + c;
+    var state = StateData[r][c];
+    GridAct(document.getElementById(id),(state + 2) % 3);
+    return state;
+}
+
+function InvertCol(e,r,c) {
+    var state = ColState[r][c];
+    ColState[r][c] = ClueAct(e,state);
+}
+
+function InvertRow(e,r,c) {
+    var state = RowState[r][c];
+    RowState[r][c] = ClueAct(e,state);
+}
+
+function LineAlign(r,c,newcolor) {
+    LineToggle(r, c, RowSize, ColSize, newcolor);
+}
+
+function RevertGrid() {
+    var sum = 0;
+    for (i = 1; i <= RowSize; i++) {
+        for (j = 1; j <= ColSize; j++) {
+            sum += RestoreState(i,j);
+        }
+    }
+    document.getElementById('stateget').disabled = sum > 0 ? false : true;
+    document.getElementById('stateset').disabled = true;
+}
+
+function StateSet() {
+    var pid = "<% puzzleid %>";
+    document.cookie = SaveArray(StateData, pid);
+    // make sure cookie was set (if too large, fails silently)
+    var ma = ReadArray(document.cookie, NewArray(), pid);
+    if ( JSON.stringify(ma) === JSON.stringify(StateData) ) {
+        document.getElementById('stateget').disabled = false;
+    } else {
+        document.getElementById('stateget').disabled = true;
+        alert("Unable to save progress: grid too large.");
+    }
+    document.getElementById('stateset').disabled = true;
+}
+
+function StateGet() {
+    var pid = "<% puzzleid %>";
+    StateData = ReadArray(document.cookie, NewArray(), pid);
+    RevertGrid();
+}
+
+function StateClr() {
+    var pid = "<% puzzleid %>";
+    StateData = NewArray();  // reinitialize the array to zeroes
+    document.cookie = SetCookieValue(pid);  // delete the cookie
+    RevertGrid();
+}
+</script></head>
+<body onload="StateGet()">
+
+<h1><% puzzleid %></h1>
+
+<% IF rowcheck.0 != colcheck.0 %>
+<h2 style="font-color: red"> Checksum error in puzzle - unable to display! </h2>
+<% ELSE %>
+
+    <table id="puzzle">
+
+    <%# columns are displayed at right angles, so we need to calculate hints
+        for all columns before beginning display logic #%>
+
+    <%- i=1; FOREACH c IN cols -%>
+        <%- chints.$i = hint(c, rows.size) -%>
+        <%- i = i+1 -%>
+    <%- END -%>
+
+    <%- j=0; WHILE j < colcheck.1 -%>
+        <tr>
+        <th colspan="<% rowcheck.1 %>"></td>
+        <%- i=1; FOREACH c IN cols -%>
+            <%- IF chints.$i > 0; useclass = "border hilite"; ELSE; useclass = "border"; END -%>
+            <th class="<% useclass %>" onclick="InvertCol(this,<% j + 1 %>,<% i %>)"><% c.$j %></th>
+            <%- i = i+1 -%>
+        <%- END -%>
+        </tr>
+        <%- j = j+1 -%>
+    <%- END -%>
+
+    <%- i = 1 -%>
+    <%- FOREACH r IN rows -%>
+        <%- IF hint(r, cols.size) > 0; useclass = "hilite"; ELSE; useclass = ""; END -%>
+        <tr class="border">
+        <%- n = 1; FOREACH k IN r -%>
+            <td class="<% useclass %>" onclick="InvertRow(this,<% i %>,<% n %>)"><% k %></td>
+            <%- n = n+1 -%>
+        <%- END -%>
+        <%- j = 1 -%>
+        <%- FOREACH c IN cols -%>
+            <td class="border" id="r<% i %>c<% j %>" onclick="ChangeState(<% i %>,<% j %>)"
+                               onmouseover="LineAlign(<% i %>,<% j %>,'linen')"
+                               onmouseout="LineAlign(<% i %>,<% j %>,'inherit')"
+                               oncontextmenu="ReverseState(<% i %>,<% j %>); return false"></td>
+            <%- j = j+1 -%>
+        <%- END -%>
+        </tr>
+        <%- i = i+1 -%>
+    <%- END -%>
+
+    </table>
+
+<p><!-- <input type=checkbox checked disabled>Show starting hints -->
+<input type=checkbox onclick="HintToggle(this)">Show starting hints
+<input style="margin-left: 3em" type=checkbox onclick="GridToggle(this)">
+    Darken grid lines for filled cells</p>
+<input type="submit" id="stateset" value="Save Progress" onclick="StateSet()" />
+<input type="submit" id="stateget" value="Restore Saved Progress" onclick="StateGet()" />
+<input type="submit" id="stateclr" value="Reset Puzzle" onclick="StateClr()" />
+
+<% END %>
+
+</body>
+</html>
