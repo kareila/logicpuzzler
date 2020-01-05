@@ -60,8 +60,15 @@ function GridToggle(e) {
 }
 
 function BaseToggle(e,newcolor) {
-    if ( e.style.backgroundColor != 'black' ) {
+    altblack = 'maroon';
+    if ( e.style.backgroundColor != 'black' && e.style.backgroundColor != altblack ) {
         e.style.backgroundColor = newcolor;
+    } else { // hacking in black toggle after the fact
+        if ( newcolor == 'inherit' ) {
+            e.style.backgroundColor = 'black';
+        } else {
+            e.style.backgroundColor = altblack;
+        }
     }
 }
 

@@ -25,6 +25,10 @@ Changes
 
 Initial public release.
 
+### 5 Jan 2020
+
+Tweaked mouseover colors for better visibility.
+
 
 Overview
 --------
@@ -95,4 +99,4 @@ including, but not limited to, the implied warranties of merchantability and
 fitness for a particular purpose are disclaimed.
 
 
-_kareila at dreamwidth dot org // 8 Feb 2016_
+_kareila at dreamwidth dot org // 5 Jan 2020_

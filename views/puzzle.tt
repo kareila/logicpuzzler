@@ -153,7 +153,7 @@ function StateClr() {
         <%- j = 1 -%>
         <%- FOREACH c IN cols -%>
             <td class="border" id="r<% i %>c<% j %>" onclick="ChangeState(<% i %>,<% j %>)"
-                               onmouseover="LineAlign(<% i %>,<% j %>,'linen')"
+                               onmouseover="LineAlign(<% i %>,<% j %>,'MistyRose')"
                                onmouseout="LineAlign(<% i %>,<% j %>,'inherit')"
                                oncontextmenu="ReverseState(<% i %>,<% j %>); return false"></td>
             <%- j = j+1 -%>
